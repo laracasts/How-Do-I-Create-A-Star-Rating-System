@@ -4,65 +4,67 @@ namespace Tests\Feature;
 
 use App\Article;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use InvalidArgumentException;
 use Tests\TestCase;
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ArticleRatingTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp()
-    {
-        parent::setUp();
-
-        $this->article = factory(Article::class)->create();
-        $this->user = factory(User::class)->create();
-    }
-
-
     /** @test */
-    function it_can_be_rated()
+    function it_cannot_be_rated_by_guests()
     {
-        $this->article->rate(5, $this->user);
+        $article = factory(Article::class)->create();
 
-        $this->assertCount(1, $this->article->ratings);
+        $this->post("/articles/{$article->id}/rate")->assertRedirect('login');
+
+        $this->assertEmpty($article->ratings);
     }
 
     /** @test */
-    function it_can_calculate_the_average_rating()
+    function it_can_be_rated_by_authenticated_users()
     {
-        $this->article->rate(5, $this->user);
-        $this->article->rate(1, factory(User::class)->create());
+        $this->actingAs(
+            $user = factory(User::class)->create()
+        );
 
-        $this->assertEquals(3, $this->article->rating());
+        $article = factory(Article::class)->create();
+
+        $this->post("/articles/{$article->id}/rate", ['rating' => 5]);
+
+        $this->assertEquals(5, $article->rating());
     }
 
     /** @test */
-    function it_cannot_be_rated_above_5()
+    function it_can_update_a_users_rating()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->actingAs(
+            $user = factory(User::class)->create()
+        );
 
-        $this->article->rate(6);
+        $article = factory(Article::class)->create();
+
+        $this->post("/articles/{$article->id}/rate", ['rating' => 5]);
+
+        $this->assertEquals(5, $article->rating());
+
+        $this->post("/articles/{$article->id}/rate", ['rating' => 1]);
+
+        $this->assertEquals(1, $article->rating());
     }
 
     /** @test */
-    function it_cannot_be_rated_below_1()
+    function it_requires_a_valid_rating()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->actingAs(
+            $user = factory(User::class)->create()
+        );
 
-        $this->article->rate(-1);
-    }
+        $article = factory(Article::class)->create();
 
-    /** @test */
-    function it_can_only_be_rated_once_per_user()
-    {
-        $this->actingAs($this->user);
+        $this->post("/articles/{$article->id}/rate")->assertSessionHasErrors('rating');
 
-        $this->article->rate(5);
-        $this->article->rate(1);
-
-        $this->assertEquals(1, $this->article->rating());
-
+        $this->post("/articles/{$article->id}/rate", ['rating' => 'foo'])->assertSessionHasErrors('rating');
     }
 }

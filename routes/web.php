@@ -14,3 +14,7 @@
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::post('/articles/{article}/rate', 'ArticleRatingController@store')->middleware('auth');
+
+Auth::routes();
