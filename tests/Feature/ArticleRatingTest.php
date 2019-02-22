@@ -4,9 +4,8 @@ namespace Tests\Feature;
 
 use App\Article;
 use App\User;
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ArticleRatingTest extends TestCase
 {
@@ -64,7 +63,6 @@ class ArticleRatingTest extends TestCase
         $article = factory(Article::class)->create();
 
         $this->post("/articles/{$article->id}/rate")->assertSessionHasErrors('rating');
-
         $this->post("/articles/{$article->id}/rate", ['rating' => 'foo'])->assertSessionHasErrors('rating');
     }
 }

@@ -15,6 +15,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/articles/{article}', 'ArticlesController@show');
 Route::post('/articles/{article}/rate', 'ArticleRatingController@store')->middleware('auth');
 
 Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');

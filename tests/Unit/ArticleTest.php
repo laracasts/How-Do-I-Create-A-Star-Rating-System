@@ -20,7 +20,6 @@ class ArticleTest extends TestCase
         $this->user = factory(User::class)->create();
     }
 
-
     /** @test */
     function it_can_be_rated()
     {
@@ -36,6 +35,14 @@ class ArticleTest extends TestCase
         $this->article->rate(1, factory(User::class)->create());
 
         $this->assertEquals(3, $this->article->rating());
+    }
+
+    /** @test */
+    function it_can_fetch_a_users_rating()
+    {
+        $this->article->rate(5, $this->user);
+
+        $this->assertEquals(5, $this->article->ratingFor($this->user));
     }
 
     /** @test */
@@ -63,6 +70,5 @@ class ArticleTest extends TestCase
         $this->article->rate(1);
 
         $this->assertEquals(1, $this->article->rating());
-
     }
 }
